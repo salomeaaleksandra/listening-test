@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Music Similarity Test</title>
+
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background: url('background.png') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        input[type="text"] {
+            padding: 6px;
+            width: 220px;
+            margin-top: 4px;
+            margin-bottom: 16px;
+        }
+
+        audio {
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        select {
+            margin-bottom: 12px;
+            padding: 4px;
+        }
+
+        .test-block {
+            margin-bottom: 30px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 10px;
+        }
+
+        .candidate-block {
+            margin-bottom: 18px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+        }
+
+        .submit-row {
+            margin-top: 24px;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        const SUPABASE_URL = "https://zpvhnhnmjitkskhrhalp.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_jrzABfRbbZN4BNrUmABKag_b3LlgY18";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function saveResults(event) {
+            event.preventDefault();
+
+            const consentGiven = document.getElementById("consent").checked;
+            if (!consentGiven) {
+                alert("You must agree to participate before submitting.");
+                return;
+            }
+
+            const participantCode = document.getElementById("participant_code")?.value.trim() || null;
+
+            let results = [];
+
+            for (let i = 0; i < 3; i++) {
+                const reference = document.getElementById("reference_" + i).dataset.song;
+                let ranking = [];
+                let usedRanks = [];
+
+                for (let j = 0; j < 5; j++) {
+                    const songEl = document.getElementById("song_" + i + "_" + j);
+                    const rankEl = document.getElementById("rank_" + i + "_" + j);
+
+                    const song = songEl.dataset.song;
+                    const rank = parseInt(rankEl.value);
+
+                    if (isNaN(rank)) {
+                        alert("Please assign all ranks in Test " + (i + 1) + ".");
+                        return;
+                    }
+
+                    usedRanks.push(rank);
+                    ranking.push({
+                        song: song,
+                        rank: rank
+                    });
+                }
+
+                const uniqueRanks = new Set(usedRanks);
+                if (uniqueRanks.size !== 5) {
+                    alert("Each rank in Test " + (i + 1) + " must be unique.");
+                    return;
+                }
+
+                results.push({
+                    test: i + 1,
+                    reference_song: reference,
+                    ranking: ranking
+                });
+            }
+
+            const submitBtn = document.getElementById("submitBtn");
+            submitBtn.disabled = true;
+            submitBtn.value = "Submitting...";
+
+            const { error } = await supabaseClient
+                .from("listening_results")
+                .insert([{
+                    participant_code: participantCode,
+                    consent: true,
+                    test_version: "v2_ranking",
+                    responses: results
+                }]);
+
+            submitBtn.disabled = false;
+            submitBtn.value = "Save Results";
+
+            if (error) {
+                console.error("Supabase insert error:", error);
+                alert("Submission failed. Check console.");
+                return;
+            }
+
+            alert("Thank you. Your responses were saved.");
+            document.querySelector("form").reset();
+        }
+    </script>
+</head>
+<body>
+    <h1>Music Similarity Test</h1>
+
+    <p>
+        Please rank the 5 songs from <b>most similar (1)</b> to <b>least similar (5)</b> relative to the reference song.
+    </p>
+
+    <p>
+        Participant code:<br>
+        <input type="text" id="participant_code" placeholder="e.g. P001">
+    </p>
+
+    <form onsubmit="saveResults(event);">
+
+        <div class="test-block">
+            <h3>Test 1</h3>
+
+            <p><b>Reference Song:</b></p>
+            <audio controls id="reference_0" data-song="085420.wav">
+                <source src="AudioFiles/085/085420.wav" type="audio/wav">
+            </audio>
+
+            <p>Rank the songs below from most similar (1) to least similar (5):</p>
+    
+            <div class="candidate-block">
+                <p><b>Song 1:</b></p>
+                <audio controls id="song_0_0" data-song="085255.wav">
+                    <source src="AudioFiles/085/085255.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_0_0">Rank:</label>
+                <select id="rank_0_0">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 2:</b></p>
+                <audio controls id="song_0_1" data-song="085843.wav">
+                    <source src="AudioFiles/085/085843.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_0_1">Rank:</label>
+                <select id="rank_0_1">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 3:</b></p>
+                <audio controls id="song_0_2" data-song="085076.wav">
+                    <source src="AudioFiles/085/085076.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_0_2">Rank:</label>
+                <select id="rank_0_2">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 4:</b></p>
+                <audio controls id="song_0_3" data-song="085073.wav">
+                    <source src="AudioFiles/085/085073.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_0_3">Rank:</label>
+                <select id="rank_0_3">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 5:</b></p>
+                <audio controls id="song_0_4" data-song="085041.wav">
+                    <source src="AudioFiles/085/085041.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_0_4">Rank:</label>
+                <select id="rank_0_4">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        </div>
+        <div class="test-block">
+            <h3>Test 2</h3>
+
+            <p><b>Reference Song:</b></p>
+            <audio controls id="reference_1" data-song="085038.wav">
+                <source src="AudioFiles/085/085038.wav" type="audio/wav">
+            </audio>
+
+            <p>Rank the songs below from most similar (1) to least similar (5):</p>
+    
+            <div class="candidate-block">
+                <p><b>Song 1:</b></p>
+                <audio controls id="song_1_0" data-song="085869.wav">
+                    <source src="AudioFiles/085/085869.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_1_0">Rank:</label>
+                <select id="rank_1_0">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 2:</b></p>
+                <audio controls id="song_1_1" data-song="085291.wav">
+                    <source src="AudioFiles/085/085291.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_1_1">Rank:</label>
+                <select id="rank_1_1">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 3:</b></p>
+                <audio controls id="song_1_2" data-song="085342.wav">
+                    <source src="AudioFiles/085/085342.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_1_2">Rank:</label>
+                <select id="rank_1_2">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 4:</b></p>
+                <audio controls id="song_1_3" data-song="085039.wav">
+                    <source src="AudioFiles/085/085039.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_1_3">Rank:</label>
+                <select id="rank_1_3">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 5:</b></p>
+                <audio controls id="song_1_4" data-song="085599.wav">
+                    <source src="AudioFiles/085/085599.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_1_4">Rank:</label>
+                <select id="rank_1_4">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        </div>
+        <div class="test-block">
+            <h3>Test 3</h3>
+
+            <p><b>Reference Song:</b></p>
+            <audio controls id="reference_2" data-song="085042.wav">
+                <source src="AudioFiles/085/085042.wav" type="audio/wav">
+            </audio>
+
+            <p>Rank the songs below from most similar (1) to least similar (5):</p>
+    
+            <div class="candidate-block">
+                <p><b>Song 1:</b></p>
+                <audio controls id="song_2_0" data-song="085254.wav">
+                    <source src="AudioFiles/085/085254.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_2_0">Rank:</label>
+                <select id="rank_2_0">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 2:</b></p>
+                <audio controls id="song_2_1" data-song="085072.wav">
+                    <source src="AudioFiles/085/085072.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_2_1">Rank:</label>
+                <select id="rank_2_1">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 3:</b></p>
+                <audio controls id="song_2_2" data-song="085040.wav">
+                    <source src="AudioFiles/085/085040.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_2_2">Rank:</label>
+                <select id="rank_2_2">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 4:</b></p>
+                <audio controls id="song_2_3" data-song="085027.wav">
+                    <source src="AudioFiles/085/085027.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_2_3">Rank:</label>
+                <select id="rank_2_3">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        
+            <div class="candidate-block">
+                <p><b>Song 5:</b></p>
+                <audio controls id="song_2_4" data-song="085074.wav">
+                    <source src="AudioFiles/085/085074.wav" type="audio/wav">
+                </audio>
+
+                <label for="rank_2_4">Rank:</label>
+                <select id="rank_2_4">
+                    <option value="">Select rank</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                </select>
+            </div>
+        </div>
+        <p>
+            <input type="checkbox" id="consent" required>
+            I agree to participate in this study and allow my responses to be used for research purposes.
+        </p>
+
+        <div class="submit-row">
+            <input type="submit" id="submitBtn" value="Save Results">
+        </div>
+    </form>
+
+    <p style="font-size: 12px; margin-top: 20px;">
+        This experiment is based on research from
+        <a href="https://arxiv.org/abs/1612.01840" target="_blank" style="color: white;">
+            arXiv:1612.01840
+        </a>.
+    </p>
+
+    <p style="font-size: 12px;">
+        The metadata is released under the Creative Commons Attribution 4.0 International License (CC BY 4.0).
+        We do not hold the copyright on the audio and distribute it under the license chosen by the artist.
+        The dataset is meant for research purposes.
+    </p>
+</body>
+</html>

@@ -25,6 +25,7 @@
         audio {
             display: block;
             margin-bottom: 12px;
+            width: 100%;
         }
 
         .test-block {
@@ -34,17 +35,49 @@
             border-radius: 10px;
         }
 
+        .sortable-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sortable-item {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            cursor: grab;
+        }
+
+        .sortable-item:active {
+            cursor: grabbing;
+        }
+
+        .rank-label {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
         .submit-row {
             margin-top: 24px;
         }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
     <script>
         const SUPABASE_URL = "https://zpvhnhnmjitkskhrhalp.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_jrzABfRbbZN4BNrUmABKag_b3LlgY18";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        document.addEventListener("DOMContentLoaded", function () {
+            for (let i = 0; i < 3; i++) {
+                new Sortable(document.getElementById("list_" + i), {
+                    animation: 150
+                });
+            }
+        });
 
         async function saveResults(event) {
             event.preventDefault();
@@ -58,20 +91,26 @@
             const participantCode = document.getElementById("participant_code")?.value.trim() || null;
 
             let results = [];
-            for (let i = 0; i < 6; i++) {
-                const selected = document.querySelector('input[name="triplet' + i + '"]:checked');
-                const choice = selected ? selected.value : "No selection";
 
+            for (let i = 0; i < 3; i++) {
                 const reference = document.getElementById("reference_" + i).dataset.song;
-                const songA = document.getElementById("songA_" + i).dataset.song;
-                const songB = document.getElementById("songB_" + i).dataset.song;
+                const list = document.getElementById("list_" + i);
+                const items = list.children;
+
+                let ranking = [];
+
+                for (let rank = 0; rank < items.length; rank++) {
+                    const song = items[rank].dataset.song;
+                    ranking.push({
+                        song: song,
+                        rank: rank + 1
+                    });
+                }
 
                 results.push({
-                    triplet: i + 1,
+                    test: i + 1,
                     reference_song: reference,
-                    song_a: songA,
-                    song_b: songB,
-                    chosen_song: choice
+                    ranking: ranking
                 });
             }
 
@@ -84,7 +123,7 @@
                 .insert([{
                     participant_code: participantCode,
                     consent: true,
-                    test_version: "v1",
+                    test_version: "v3_dragdrop_ranking",
                     responses: results
                 }]);
 
@@ -106,6 +145,11 @@
     <h1>Music Similarity Test</h1>
 
     <p>
+        Please drag the songs into order from <b>most similar (top)</b> to <b>least similar (bottom)</b>
+        relative to the reference song.
+    </p>
+
+    <p>
         Participant code:<br>
         <input type="text" id="participant_code" placeholder="e.g. P001">
     </p>
@@ -115,151 +159,160 @@
         <div class="test-block">
             <h3>Test 1</h3>
 
-            <p>Reference Song:</p>
-            <audio controls id="reference_0" data-song="085869.wav">
-                <source src="AudioFiles/085/085869.wav" type="audio/wav">
+            <p><b>Reference Song:</b></p>
+            <audio controls id="reference_0" data-song="085040.wav">
+                <source src="AudioFiles/085/085040.wav" type="audio/wav">
             </audio>
 
-            <p>Song A:</p>
-            <audio controls id="songA_0" data-song="085599.wav">
-                <source src="AudioFiles/085/085599.wav" type="audio/wav">
-            </audio>
+            <p>
+                Drag the songs below so that the <b>top</b> one is the most similar
+                and the <b>bottom</b> one is the least similar.
+            </p>
 
-            <p>Song B:</p>
-            <audio controls id="songB_0" data-song="085039.wav">
-                <source src="AudioFiles/085/085039.wav" type="audio/wav">
-            </audio>
-
-            <p>Which song is more similar to the reference song?</p>
-
-            <input type="radio" name="triplet0" value="A"> Song A<br>
-            <input type="radio" name="triplet0" value="B"> Song B<br>
-            <input type="radio" name="triplet0" value="None"> Neither, both are equally different<br>
+            <ul id="list_0" class="sortable-list">
+    
+                <li class="sortable-item" id="song_0_0" data-song="085342.wav">
+                    <div class="rank-label">Song 1</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085342.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_0_1" data-song="085027.wav">
+                    <div class="rank-label">Song 2</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085027.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_0_2" data-song="085039.wav">
+                    <div class="rank-label">Song 3</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085039.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_0_3" data-song="085240.wav">
+                    <div class="rank-label">Song 4</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085240.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_0_4" data-song="085038.wav">
+                    <div class="rank-label">Song 5</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085038.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+            </ul>
         </div>
     
         <div class="test-block">
             <h3>Test 2</h3>
 
-            <p>Reference Song:</p>
-            <audio controls id="reference_1" data-song="085342.wav">
-                <source src="AudioFiles/085/085342.wav" type="audio/wav">
+            <p><b>Reference Song:</b></p>
+            <audio controls id="reference_1" data-song="085255.wav">
+                <source src="AudioFiles/085/085255.wav" type="audio/wav">
             </audio>
 
-            <p>Song A:</p>
-            <audio controls id="songA_1" data-song="085041.wav">
-                <source src="AudioFiles/085/085041.wav" type="audio/wav">
-            </audio>
+            <p>
+                Drag the songs below so that the <b>top</b> one is the most similar
+                and the <b>bottom</b> one is the least similar.
+            </p>
 
-            <p>Song B:</p>
-            <audio controls id="songB_1" data-song="085042.wav">
-                <source src="AudioFiles/085/085042.wav" type="audio/wav">
-            </audio>
-
-            <p>Which song is more similar to the reference song?</p>
-
-            <input type="radio" name="triplet1" value="A"> Song A<br>
-            <input type="radio" name="triplet1" value="B"> Song B<br>
-            <input type="radio" name="triplet1" value="None"> Neither, both are equally different<br>
+            <ul id="list_1" class="sortable-list">
+    
+                <li class="sortable-item" id="song_1_0" data-song="085073.wav">
+                    <div class="rank-label">Song 1</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085073.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_1_1" data-song="085254.wav">
+                    <div class="rank-label">Song 2</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085254.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_1_2" data-song="085042.wav">
+                    <div class="rank-label">Song 3</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085042.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_1_3" data-song="085291.wav">
+                    <div class="rank-label">Song 4</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085291.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_1_4" data-song="085074.wav">
+                    <div class="rank-label">Song 5</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085074.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+            </ul>
         </div>
     
         <div class="test-block">
             <h3>Test 3</h3>
 
-            <p>Reference Song:</p>
-            <audio controls id="reference_2" data-song="085843.wav">
-                <source src="AudioFiles/085/085843.wav" type="audio/wav">
+            <p><b>Reference Song:</b></p>
+            <audio controls id="reference_2" data-song="085599.wav">
+                <source src="AudioFiles/085/085599.wav" type="audio/wav">
             </audio>
 
-            <p>Song A:</p>
-            <audio controls id="songA_2" data-song="085040.wav">
-                <source src="AudioFiles/085/085040.wav" type="audio/wav">
-            </audio>
+            <p>
+                Drag the songs below so that the <b>top</b> one is the most similar
+                and the <b>bottom</b> one is the least similar.
+            </p>
 
-            <p>Song B:</p>
-            <audio controls id="songB_2" data-song="085076.wav">
-                <source src="AudioFiles/085/085076.wav" type="audio/wav">
-            </audio>
-
-            <p>Which song is more similar to the reference song?</p>
-
-            <input type="radio" name="triplet2" value="A"> Song A<br>
-            <input type="radio" name="triplet2" value="B"> Song B<br>
-            <input type="radio" name="triplet2" value="None"> Neither, both are equally different<br>
-        </div>
+            <ul id="list_2" class="sortable-list">
     
-        <div class="test-block">
-            <h3>Test 4</h3>
-
-            <p>Reference Song:</p>
-            <audio controls id="reference_3" data-song="085420.wav">
-                <source src="AudioFiles/085/085420.wav" type="audio/wav">
-            </audio>
-
-            <p>Song A:</p>
-            <audio controls id="songA_3" data-song="085027.wav">
-                <source src="AudioFiles/085/085027.wav" type="audio/wav">
-            </audio>
-
-            <p>Song B:</p>
-            <audio controls id="songB_3" data-song="085038.wav">
-                <source src="AudioFiles/085/085038.wav" type="audio/wav">
-            </audio>
-
-            <p>Which song is more similar to the reference song?</p>
-
-            <input type="radio" name="triplet3" value="A"> Song A<br>
-            <input type="radio" name="triplet3" value="B"> Song B<br>
-            <input type="radio" name="triplet3" value="None"> Neither, both are equally different<br>
-        </div>
-    
-        <div class="test-block">
-            <h3>Test 5</h3>
-
-            <p>Reference Song:</p>
-            <audio controls id="reference_4" data-song="085255.wav">
-                <source src="AudioFiles/085/085255.wav" type="audio/wav">
-            </audio>
-
-            <p>Song A:</p>
-            <audio controls id="songA_4" data-song="085073.wav">
-                <source src="AudioFiles/085/085073.wav" type="audio/wav">
-            </audio>
-
-            <p>Song B:</p>
-            <audio controls id="songB_4" data-song="085240.wav">
-                <source src="AudioFiles/085/085240.wav" type="audio/wav">
-            </audio>
-
-            <p>Which song is more similar to the reference song?</p>
-
-            <input type="radio" name="triplet4" value="A"> Song A<br>
-            <input type="radio" name="triplet4" value="B"> Song B<br>
-            <input type="radio" name="triplet4" value="None"> Neither, both are equally different<br>
-        </div>
-    
-        <div class="test-block">
-            <h3>Test 6</h3>
-
-            <p>Reference Song:</p>
-            <audio controls id="reference_5" data-song="085072.wav">
-                <source src="AudioFiles/085/085072.wav" type="audio/wav">
-            </audio>
-
-            <p>Song A:</p>
-            <audio controls id="songA_5" data-song="085074.wav">
-                <source src="AudioFiles/085/085074.wav" type="audio/wav">
-            </audio>
-
-            <p>Song B:</p>
-            <audio controls id="songB_5" data-song="085254.wav">
-                <source src="AudioFiles/085/085254.wav" type="audio/wav">
-            </audio>
-
-            <p>Which song is more similar to the reference song?</p>
-
-            <input type="radio" name="triplet5" value="A"> Song A<br>
-            <input type="radio" name="triplet5" value="B"> Song B<br>
-            <input type="radio" name="triplet5" value="None"> Neither, both are equally different<br>
+                <li class="sortable-item" id="song_2_0" data-song="085072.wav">
+                    <div class="rank-label">Song 1</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085072.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_2_1" data-song="085076.wav">
+                    <div class="rank-label">Song 2</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085076.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_2_2" data-song="085041.wav">
+                    <div class="rank-label">Song 3</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085041.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_2_3" data-song="085843.wav">
+                    <div class="rank-label">Song 4</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085843.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+                <li class="sortable-item" id="song_2_4" data-song="085420.wav">
+                    <div class="rank-label">Song 5</div>
+                    <audio controls>
+                        <source src="AudioFiles/085/085420.wav" type="audio/wav">
+                    </audio>
+                </li>
+        
+            </ul>
         </div>
     
         <p>
