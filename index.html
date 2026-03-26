@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Music Similarity Test</title>
+    
     <style>
         body {
             font-family: Helvetica, Arial, sans-serif;
@@ -10,44 +11,80 @@
             color: white;
         }
     </style>
+
+    <!-- ✅ NEW: Supabase library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- ✅ NEW: Your updated logic -->
     <script>
-        function saveResults(event) {
-            event.preventDefault(); // Prevent default form submission
-            
+        const SUPABASE_URL = "https://zpvhnhnmjitkskhrhalp.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_jrzABfRbbZN4BNrUmABKag_b3LlgY18";
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function saveResults(event) {
+            event.preventDefault();
+
             let consentGiven = document.getElementById("consent").checked;
             if (!consentGiven) {
                 alert("You must agree to participate before submitting.");
                 return;
             }
 
+            let participantCode = document.getElementById("participant_code")?.value.trim();
+
             let results = [];
             for (let i = 0; i < 10; i++) {
                 let selected = document.querySelector('input[name="triplet' + i + '"]:checked');
                 let choice = selected ? selected.value : "No selection";
-                results.push({triplet: i + 1, chosen_song: choice});
+                results.push({
+                    triplet: i + 1,
+                    chosen_song: choice
+                });
             }
-            
-            let blob = new Blob([JSON.stringify(results, null, 2)], { type: "application/json" });
-            let link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "results.json";
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+
+            const submitBtn = document.getElementById("submitBtn");
+            submitBtn.disabled = true;
+            submitBtn.value = "Submitting...";
+
+            const { error } = await supabaseClient
+                .from("listening_results")
+                .insert([{
+                    participant_code: participantCode || null,
+                    consent: true,
+                    test_version: "v1",
+                    responses: results
+                }]);
+
+            submitBtn.disabled = false;
+            submitBtn.value = "Save Results";
+
+            if (error) {
+                console.error(error);
+                alert("Submission failed. Check console.");
+                return;
+            }
+
+            alert("Thank you. Your responses were saved.");
+            document.querySelector("form").reset();
         }
     </script>
 </head>
 <body>
 <h1>Music Similarity Test</h1>
 <form onsubmit="saveResults(event);">
+	<p>
+		Participant code:<br>
+		<input type="text" id="participant_code" placeholder="e.g. P001">
+	</p>
 
     <h3>Test 1</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085973.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085973.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085076.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085076.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085437.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085042.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet0" value="A"> Song A<br>
@@ -57,11 +94,11 @@
     
     <h3>Test 2</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085815.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085815.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085836.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085836.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085766.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085766.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet1" value="A"> Song A<br>
@@ -71,11 +108,11 @@
     
     <h3>Test 3</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085890.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085890.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085489.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085489.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085595.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085595.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet2" value="A"> Song A<br>
@@ -85,11 +122,11 @@
     
     <h3>Test 4</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085836.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085836.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085072.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085072.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085814.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085814.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet3" value="A"> Song A<br>
@@ -99,11 +136,11 @@
     
     <h3>Test 5</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085485.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085485.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085072.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085072.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085966.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085966.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet4" value="A"> Song A<br>
@@ -113,11 +150,11 @@
     
     <h3>Test 6</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085955.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085955.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085317.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085317.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085422.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085422.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet5" value="A"> Song A<br>
@@ -127,11 +164,11 @@
     
     <h3>Test 7</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085948.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085948.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085708.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085708.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085813.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085813.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet6" value="A"> Song A<br>
@@ -141,11 +178,11 @@
     
     <h3>Test 8</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085941.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085941.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085290.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085290.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085766.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085766.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet7" value="A"> Song A<br>
@@ -155,11 +192,11 @@
     
     <h3>Test 9</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085835.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085835.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085260.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085260.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085506.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085506.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet8" value="A"> Song A<br>
@@ -169,11 +206,11 @@
     
     <h3>Test 10</h3>
     <p>Reference Song:</p>
-    <audio controls><source src='AudioFiles/085/085840.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085840.wav' type='audio/wav'></audio>
     <p>Song A:</p>
-    <audio controls><source src='AudioFiles/085/085040.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085040.wav' type='audio/wav'></audio>
     <p>Song B:</p>
-    <audio controls><source src='AudioFiles/085/085307.wav' type='audio/mpeg'></audio>
+    <audio controls><source src='AudioFiles/085/085307.wav' type='audio/wav'></audio>
     <p>Which song is more similar to the reference song?</p>
     
     <input type="radio" name="triplet9" value="A"> Song A<br>
@@ -185,4 +222,4 @@
         <input type="checkbox" id="consent" required>
         I agree to participate in this study and allow my responses to be used for research purposes.
     </p>
-<input type="submit" value="Save Results"></form><p style="font-size: 12px; margin-top: 20px;">This experiment is based on research from <a href="https://arxiv.org/abs/1612.01840" target="_blank" style="color: white;">arXiv:1612.01840</a>.</p><p style="font-size: 12px;">The metadata is released under the Creative Commons Attribution 4.0 International License (CC BY 4.0). We do not hold the copyright on the audio and distribute it under the license chosen by the artist. The dataset is meant for research purposes.</p></body></html>
+<input type="submit" id="submitBtn" value="Save Results"></form><p style="font-size: 12px; margin-top: 20px;">This experiment is based on research from <a href="https://arxiv.org/abs/1612.01840" target="_blank" style="color: white;">arXiv:1612.01840</a>.</p><p style="font-size: 12px;">The metadata is released under the Creative Commons Attribution 4.0 International License (CC BY 4.0). We do not hold the copyright on the audio and distribute it under the license chosen by the artist. The dataset is meant for research purposes.</p></body></html>
